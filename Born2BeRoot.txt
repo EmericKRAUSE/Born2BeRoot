@@ -1,0 +1,164 @@
+╔════════════════════════════╗
+║ SSH Configuration:         ║
+╚════════════════════════════╝
+
+apt-get install openssh-server  █ # Installation du serveur ssh #
+nano /etc/ssh/sshd_config       █ # Edit le fichier ssh #
+
+    Port 4242
+    PermitRootLogin no
+
+systemctl status ssh            █ # Check le status du serveur ssh #
+service ssh restart             █ # Restart le serveur ssh #
+
+╔════════════════════════════╗
+║ UFW Configuration:         ║
+╚════════════════════════════╝
+
+apt-get install ufw  █ # Installation du parfeu ufw #
+ufw enable           █ # Active le parfeu ufw #
+ufw allow 4242       █ # Autorise le port 4242 #
+ufw status           █ # Check le status #
+
+╔════════════════════════════╗
+║ Group & User:              ║
+╚════════════════════════════╝
+
+groupadd user42             █ # Creer le group user42 #
+usermod -aG sudo ekrause    █ # Ajoute ekrause au group sudo #
+usermod -aG user42 ekrause  █ # Ajoute ekrause au group user42 #
+groups ekrause              █ # Verifie si ekrause a bien ete ajoute aux groups sudo & user42 #
+
+╔═════════════════════════════╗
+║ Configuration mot de passe: ║
+╚═════════════════════════════╝
+
+nano /etc/login.defs               █ # Edite le fichier configuration mdp #
+
+    PASS_MAX_DAYS 30
+    PASS_MIN_DAYS 2
+    PASS_WARN_AGE 7
+
+chage ekrause                      █ # Configuration mdp user #
+
+        Minimum Password Age [0]: 2
+        Maximum Password Age [9999]: 30
+        Last Password Change (YYYY-MM-DD) [date]:
+        Password Expiration Warning [7]: 7
+        (Enter for the rest)
+
+chage root                         █ # Configuration mdp root #
+
+        Minimum Password Age [0]: 2
+        Maximum Password Age [9999]: 30
+        Last Password Change (YYYY-MM-DD) [date]:
+        Password Expiration Warning [7]: 7
+        (Enter for the rest)
+
+apt-get install libpam-pwquality   █ # Installe libpam #
+nano /etc/security/pwquality.conf  █ # Edite le fichier de configuration #
+
+    difok = 7
+    minlen = 10
+    dcredit = -1
+    ucredit = -1
+    lcredit = -1
+    maxrepeat = 3
+    usercheck = 1
+    enforcing = 1
+    retry = 3
+    enforce_for_root
+
+╔═════════════════════════════╗
+║ Configuration sudo:         ║
+╚═════════════════════════════╝
+
+apt-get install sudo          █ # Installe sudo #
+mkdir /var/log/sudo           █ # Creer le dossier log #
+touch /var/log/sudo/sudo.log  █ # Creer le fichier log #
+nano /etc/sudoers             █ # Edite le fichier sudo #
+
+Defaults passwd_tries=3 
+Defaults badpass_message="Votre message perso" 
+Defaults logfile="/var/log/sudo/sudo.log" 
+Defaults log_input, log_output
+Defaults requiretty
+Defaults secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin"
+
+╔════════════════════════════╗
+║ Script monitoring.sh:      ║
+╚════════════════════════════╝
+
+touch monitoring.sh       █ # Creer le fichier monitoring.sh #
+chown root monitoring.sh  █ # Donne la propriete du fichier a l'utilisateur root #
+chmod u+x monitoring.sh   █ # Ajoute la permission d'execution du fichier a l'utilisateur proprietaire #
+
+#!/usr/bin/bash
+
+arch="$(uname -a)"
+pcpu=$(grep 'physical id' /proc/cpuinfo | sort | uniq | wc -l)
+vcpu=$(grep '^processor' /proc/cpuinfo | wc -l)
+uram=$(free -m | grep 'Mem' | awk '{print $3}')
+tram=$(free -m | grep 'Mem' | awk '{printf $2}')
+pram=$(free -m | grep 'Mem' | awk '{printf "%.2f", $3 * 100 / $2}')
+udisk=$(df -h | grep '/chemin/vers/disk' | awk '{print $3}')
+tdisk=$(df -h | grep '/chemin/vers/disk' | awk '{print $2}')
+pdisk=$(df -h | grep '/chemin/vers/disk' | awk '{print $5}')
+cpul=$(top -bn1 | grep '^%Cpu' | awk '{print $2}')
+lb="$(who -b | awk '{print $3, $4}')"
+lvml="$(lsblk | grep 'lvm' | wc -l)"
+lvm="$(if [ $lvml -eq 0 ]; then echo "no"; else echo "yes"; fi)"
+ctcp="$(ss -t -a | grep 'ESTAB' | wc -l)"
+ulog="$(users | wc -w)"
+ip="$(hostname -I | awk '{print $1}')"
+mac="$(ip link | grep 'ether' | awk '{print $2}' | head -n 1)"
+sudo="$(grep 'COMMAND=' /var/log/sudo/sudo.log | wc -l)"
+
+wall "
+    #Architecture: $arch
+    #CPU physical: $pcpu
+    #vCPU: $vcpu
+    #Memory Usage: ${uram}/${tram}MB ($pram%)
+    #Disk Usage: $udisk/$tdisk ($pdisk)
+    #CPU load: $cpul%
+    #Last boot: $lb
+    #LVM use: $lvm
+    #Connexions TCP: $ctcp ESTABLISHED
+    #User log: $ulog
+    #Network: IP $ip ($mac)
+    #Sudo: $sudo cmd
+"
+crontab -l  █ # liste les crontab actifs #
+crontab -e  █ # Edite le fichier crontab #
+
+    */10 * * * * /var/monitoring.sh
+
+╔════════════════════════════╗
+║ Verification:              ║
+╚════════════════════════════╝
+
+sudo apt update
+sudo apt install lighttpd mariadb-server php php-mysql php-curl php-gd php-intl php-mbstring php-soap php-xml php-xmlrpc php-zip php-fpm wget
+sudo mysql -u root -p
+cd /tmp
+wget https://wordpress.org/latest.tar.gz
+tar -zxvf latest.tar.gz
+sudo mv wordpress/* /var/www/html/
+sudo nano /etc/lighttpd/conf-available/10-fastcgi.conf
+sudo lighttpd-enable-mod fastcgi
+sudo service lighttpd restart
+sudo chown -R www-data:www-data /var/www/html/
+
+CREATE DATABASE wordpress;
+CREATE USER 'utilisateur'@'localhost' IDENTIFIED BY '1234';
+GRANT ALL ON worpress.* TO 'utilisateur'@'localhost';
+FLUSH PRIVILEGES;
+EXIT;
+
+$SERVER["socket"] == ":80" {
+    server.document-root = "/var/www/html/site1"
+    server.name = "www.mon-site1.com"
+}
+
+sudo chown -R www-data:www-data /var/www/html/
+sudo chmod -R 755 /var/www/html/

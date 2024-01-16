@@ -1,0 +1,99 @@
+╔════════════════════════════╗
+║ Liste de commandes utiles: ║
+╚════════════════════════════╝
+
+lsblk                   █ # Permet d'obtenir la liste et les caracteristiques des disques et de leurs partitions #
+chown <user> <fichier>  █ # Defini l'owner du <fichier> #
+
+┌──────┐
+│ apt: │
+└──────┘
+
+apt-get install <package>  █
+apt-get remove <package>   █
+apt-get purge <package>    █
+
+┌──────┐
+│ SSH: │
+└──────┘
+
+apt-get install openssh-server     █ # Installe un serveur ssh #
+nano /etc/ssh/sshd_config          █ # Edite le fichier de configuration ssh #
+ssh <user>@<ip address> -p <port>  █ # Permet de se connecter a une machine a distance #
+
+┌──────┐
+│ UFW: │
+└──────┘
+
+ufw allow <port>     █ # Ouvre le <port> #
+ufw enable           █ # Active le parfeu #
+ufw status           █ # Affiche le status du parfeu #
+ufw status numbered  █ # Affiche le status avec les nombres #
+ufw delete <nb>      █ # Supprime la regle numero <nb> #
+
+┌───────────────┐
+│ group & user: │
+└───────────────┘
+
+groupadd <group>            █ # Creer un <group> #
+useradd <user>              █ # Creer un <user> #
+userdel <-r -f> <user>      █ # Supprime un <user> #
+grep <group> /etc/group     █ # Verifie si le <group>/<user> a bien ete creer #
+usermod -aG <group> <user>  █ # Ajoute un <user> a un <group> #
+groups <user>               █ # Liste les group auquel appartient <user> #
+cat /etc/passwd             █ # Liste les utilisateurs #
+getent group                █ # lise les groups #
+passwd <user>               █ # Change mot de passe <user> #
+gpasswd -d <user> <group>   █ # Supprime un <user> du <group> #
+
+┌────────────────┐
+│ hostname & IP: │
+└────────────────┘
+
+hostname                               █ # Affiche le nom de l'hote #
+hostname <nom d'hote>                  █ # Change le nom de l'hote temporairement #
+hostnamectl set-hostname <nom d'hote>  █ # Change le nom de l'hote permanent #
+hostname -I                            █ # Affiche les adresses IP de la machine #
+
+┌─────────────────────────────────────┐
+│ Configuration mot de passe et sudo: │
+└─────────────────────────────────────┘
+
+chage -M 30 <user>  █ # Nombre maximum de jours pendant lesquels le mot de passe est valide #
+chage -m 2 <user>   █ # Nombre minimum de jours entre deux changements de mot de passe #
+chage -W 7 <user>   █ # Avertissement avant l'expiration du mot de passe #
+
+apt-get install libpam-pwquality   █ # Installe libpam #
+nano /etc/security/pwquality.conf  █ # Edite le fichier de configuration #
+
+apt install sudo   █ # Installe sudo #
+nano /etc/sudoers  █ # Edite le fichier sudo #
+
+╔════════════════════════════╗
+║ Questions:                 ║
+╚════════════════════════════╝
+ 
+Son choix de système d'exploitation:
+    stabilite, logiciels open source, utilise APT.
+
+Les différences basiques entre Rocky et Debian:
+    Debian: Utilise APT, + stable, grande communaute, date de 1996, + de documentation
+    Rocky: Utilise YUM/DNF, + recent (2021), moins de documentation,
+
+L'intérêt des machines virtuelles:
+    securite, parfait pour faire des tests, permet d'utiliser differents OS sur la meme machine,
+    peuvent etre sauvegardees et transportees pour etre utilisees sur un autre ordinateur.
+
+la différence entre aptitude et apt:
+    apt: outil en ligne de commande pour gestion des paquets,
+         plus rapide pour des operations simples
+    aptitude: egalement en ligne de commande mais propose une interface utilisateur en mode texte et + de fonctionalitees,
+              plus puissant et plus pousse mais plus lent
+
+AppArmor: est un logiciel de securite pour Linux, permet a l'administateur de definir des règles de sécurité strictes pour chaque application,
+          limitant ainsi leurs capacités et leurs interactions avec le système.
+
+LVM: ogical Volume Manager, est un système de gestion de stockage pour Linux qui permet une gestion flexible des espaces de stockage
+            en combinant des disques physiques en volumes logiques,
+            redimensionner dynamiquement les volumes logiques sans interruption du service. Vous pouvez agrandir,
+            réduire ou déplacer des volumes logiques et des groupes de volumes selon les besoins, sans perturber les données existantes 
